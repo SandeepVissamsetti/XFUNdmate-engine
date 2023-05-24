@@ -1,11 +1,11 @@
 const moment = require("moment-timezone");
 module.exports = {
   dev: {
-    username: "admin",
-    password: "Qazujm4321",
-    database: "xfundmate",
-    host: "xfundmate.c3sgfid2hsnd.ap-south-1.rds.amazonaws.com",
-    dialect: "mysql",
+    username: process.env.DB_USERNAME || "root",
+    password: process.env.DB_PASSWORD || "root",
+    database: process.env.DB_DATABASE || "xfundmate",
+    host: process.env.DB_HOST || "localhost",
+    dialect: process.env.DB_CONNECTION || "mysql",
     dialectOptions: {
       connectTimeout: 60000,
     },
