@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const log = require("../logger");
 const openRouteController = require("../controllers/openRouteController");
 const VerifyToken = require("../_middlewares/VerifyToken");
 

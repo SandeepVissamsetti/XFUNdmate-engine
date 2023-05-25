@@ -51,6 +51,10 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      xrpl_secret: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
       fund_approved: {
         type: Sequelize.BOOLEAN,
         allowNull: false,

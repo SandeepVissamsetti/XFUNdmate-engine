@@ -43,8 +43,21 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: "",
       },
+      xrpl_secret: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: "",
+      },
     },
     {
+      defaultScope: {
+        attributes: { exclude: ["xrpl_secret"] },
+      },
+      scopes: {
+        withXRPLSecret: {
+          attributes: {},
+        },
+      },
       sequelize,
       modelName: "users",
     }

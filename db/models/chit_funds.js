@@ -63,6 +63,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: "",
       },
+      xrpl_secret: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: "",
+      },
       fund_approved: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
@@ -75,6 +80,14 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
+      defaultScope: {
+        attributes: { exclude: ["xrpl_secret"] },
+      },
+      scopes: {
+        withXRPLSecret: {
+          attributes: {},
+        },
+      },
       sequelize,
       modelName: "chit_funds",
     }

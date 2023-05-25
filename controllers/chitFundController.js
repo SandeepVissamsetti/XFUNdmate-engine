@@ -3,6 +3,8 @@ const { sequelize, Sequelize } = require("../db/models");
 const ChitFund = require("../db/models").chit_funds;
 const User = require("../db/models").users;
 const FundMembers = require("../db/models").fund_members;
+const xrpl = require("xrpl");
+const helperXRPL = require("../helpers/xrpl");
 
 exports.chitFundList = async (req, res, next) => {
   try {
@@ -40,7 +42,11 @@ exports.chitFundList = async (req, res, next) => {
 
 exports.chitFundcreate = async (req, res, next) => {
   try {
-    let chit_funds = await ChitFund.create(req.body, { raw: true });
+    let chit_funds = await ChitFund.create(req.body);
+    let xrpl_account = await helperXRPL.createAccount();
+    chit_funds.xrpl_address = xrpl_account.classicAddress;
+    chit_funds.xrpl_secret = xrpl_account.seed;
+    chit_funds.save();
     return res.status(200).send({ status: true, chit_funds });
   } catch (err) {
     if (err.details) {

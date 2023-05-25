@@ -1,31 +1,29 @@
 const express = require("express");
 const router = express.Router();
 const VerifyToken = require("../_middlewares/VerifyToken");
-const chitFundController = require("../controllers/chitFundController");
+const XRPLController = require("../controllers/XRPLController");
 const paylodValidation = require("../_middlewares/paylodValidation");
 const validationSchemas = require("../helpers/validationSchemas");
 
-router.get("/list", chitFundController.chitFundList);
-
 router.post(
-  "/create",
+  "/create-account",
   // VerifyToken,
   // paylodValidation(validationSchemas.fundCreateSchema),
-  chitFundController.chitFundcreate
+  XRPLController.createXRPLAccount
 );
 
 router.post(
-  "/add-member",
+  "/get-balance",
   // VerifyToken,
-  // paylodValidation(validationSchemas.addMemberSchema),
-  chitFundController.addMember
+  // paylodValidation(validationSchemas.fundCreateSchema),
+  XRPLController.getBalance
 );
 
 router.post(
-  "/approve",
+  "/send-xrp",
   // VerifyToken,
-  // paylodValidation(validationSchemas.fundApproveSchema),
-  chitFundController.fundApprove
+  // paylodValidation(validationSchemas.fundCreateSchema),
+  XRPLController.sendXRP
 );
 
 module.exports = router;

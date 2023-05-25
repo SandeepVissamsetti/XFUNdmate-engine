@@ -29,6 +29,10 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      xrpl_secret: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
