@@ -42,12 +42,35 @@ exports.chitFundList = async (req, res, next) => {
 
 exports.chitFundcreate = async (req, res, next) => {
   try {
-    let chit_funds = await ChitFund.create(req.body);
+    let chit_fund = await ChitFund.create(req.body);
     let xrpl_account = await helperXRPL.createAccount();
-    chit_funds.xrpl_address = xrpl_account.classicAddress;
-    chit_funds.xrpl_secret = xrpl_account.seed;
-    chit_funds.save();
-    return res.status(200).send({ status: true, chit_funds });
+    await ChitFund.update(
+      {
+        xrpl_address: xrpl_account.classicAddress,
+        xrpl_secret: xrpl_account.seed,
+      },
+      { where: { id: chit_fund.id } }
+    );
+    chit_fund = await ChitFund.findOne({
+      where: {
+        id: chit_fund.id,
+      },
+      attributes: {
+        include: [
+          [Sequelize.fn("COUNT", Sequelize.col("members.id")), "membersCount"],
+        ],
+      },
+      include: [
+        {
+          model: User,
+          through: { attributes: [] },
+          as: "members",
+          required: false,
+        },
+      ],
+      group: ["members.id"],
+    });
+    return res.status(200).send({ status: true, chit_fund });
   } catch (err) {
     if (err.details) {
       return res
