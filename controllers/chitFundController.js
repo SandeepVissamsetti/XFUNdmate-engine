@@ -88,7 +88,10 @@ exports.addMember = async (req, res, next) => {
     });
     let user = await User.create(req.body);
     await FundMembers.create({ fund_id: chit_fund.id, user_id: user.id });
-    return res.status(200).send({ status: true, message: "Success" });
+    delete user.dataValues.xrpl_secret;
+    return res
+      .status(200)
+      .send({ status: true, member: user, message: "Success" });
   } catch (err) {
     if (err.details) {
       return res
@@ -134,7 +137,7 @@ exports.chitFundApprovedMenu = async (req, res, next) => {
       where: {
         fund_approved: true,
       },
-      attributes: ["fund_name"],
+      attributes: ["id", "fund_name"],
     });
     return res.status(200).send({ status: true, chit_funds });
   } catch (err) {
