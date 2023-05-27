@@ -28,4 +28,23 @@ router.post(
   chitFundController.fundApprove
 );
 
+router.get(
+  "/approved/menu",
+  // VerifyToken,
+  chitFundController.chitFundApprovedMenu
+);
+
+router.post(
+  "/auction/start",
+  // VerifyToken,
+  // paylodValidation(validationSchemas.fundApproveSchema),
+  chitFundController.startAuction
+);
+
+router.get(
+  "/auction/list",
+  // VerifyToken,
+  chitFundController.auctionList
+);
+
 module.exports = router;
