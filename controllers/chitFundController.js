@@ -19,6 +19,7 @@ exports.chitFundList = async (req, res, next) => {
           required: false,
         },
       ],
+      order: [["createdAt", "desc"]],
     });
     return res.status(200).send({ status: true, chit_funds });
   } catch (err) {
@@ -139,6 +140,7 @@ exports.chitFundApprovedMenu = async (req, res, next) => {
         fund_approved: true,
       },
       attributes: ["id", "fund_name", "uuid"],
+      order: [["createdAt", "desc"]],
     });
     return res.status(200).send({ status: true, chit_funds });
   } catch (err) {
@@ -181,9 +183,14 @@ exports.startAuction = async (req, res, next) => {
 
 exports.auctionList = async (req, res, next) => {
   try {
-    let auctions = await Auctions.findAll({
+    let query = {
+      where: {},
       include: [{ model: ChitFund, as: "chit_fund" }],
-    });
+    };
+    if (req.query.fund_id) {
+      query.where.fund_id = req.query.fund_id;
+    }
+    let auctions = await Auctions.findAll(query);
     return res.status(200).send({ status: true, auctions });
   } catch (err) {
     if (err.details) {
@@ -311,13 +318,21 @@ exports.createBid = async (req, res, next) => {
 
 exports.bidList = async (req, res, next) => {
   try {
-    let bids = await AuctionBids.findAll({
+    let query = {
+      where: {},
       include: [
         { model: ChitFund, as: "chit_fund" },
         { model: User, as: "member" },
         { model: Auctions, as: "auction" },
       ],
-    });
+    };
+    if (req.query.fund_id) {
+      query.where.fund_id = req.query.fund_id;
+    }
+    if (req.query.auction_id) {
+      query.where.auction_id = req.query.auction_id;
+    }
+    let bids = await AuctionBids.findAll(query);
     return res.status(200).send({ status: true, bids });
   } catch (err) {
     if (err.details) {
