@@ -6,6 +6,7 @@ const ChitFund = require("../db/models").chit_funds;
 const User = require("../db/models").users;
 const FundMembers = require("../db/models").fund_members;
 const Auctions = require("../db/models").auctions;
+const AuctionBids = require("../db/models").auction_bids;
 
 exports.chitFundList = async (req, res, next) => {
   try {
@@ -50,11 +51,11 @@ exports.chitFundcreate = async (req, res, next) => {
       where: {
         id: chit_fund.id,
       },
-      attributes: {
-        include: [
-          [Sequelize.fn("COUNT", Sequelize.col("members.id")), "membersCount"],
-        ],
-      },
+      // attributes: {
+      //   include: [
+      //     [Sequelize.fn("COUNT", Sequelize.col("members.id")), "membersCount"],
+      //   ],
+      // },
       include: [
         {
           model: User,
@@ -63,7 +64,7 @@ exports.chitFundcreate = async (req, res, next) => {
           required: false,
         },
       ],
-      group: ["members.id"],
+      // group: ["members.id"],
     });
     return res.status(200).send({ status: true, chit_fund });
   } catch (err) {
@@ -137,7 +138,7 @@ exports.chitFundApprovedMenu = async (req, res, next) => {
       where: {
         fund_approved: true,
       },
-      attributes: ["id", "fund_name"],
+      attributes: ["id", "fund_name", "uuid"],
     });
     return res.status(200).send({ status: true, chit_funds });
   } catch (err) {
@@ -180,10 +181,133 @@ exports.startAuction = async (req, res, next) => {
 
 exports.auctionList = async (req, res, next) => {
   try {
-    let auction = await Auctions.findAll({
+    let auctions = await Auctions.findAll({
       include: [{ model: ChitFund, as: "chit_fund" }],
     });
-    return res.status(200).send({ status: true, auction });
+    return res.status(200).send({ status: true, auctions });
+  } catch (err) {
+    if (err.details) {
+      return res
+        .status(400)
+        .send({ status: false, message: err.details[0].message });
+    } else {
+      log.error(err);
+      return res.status(500).send({
+        status: false,
+        message: err.message ? err.message : "Internal Server Error.",
+      });
+    }
+  }
+};
+
+exports.auctionMenu = async (req, res, next) => {
+  try {
+    let chit_fund = await ChitFund.findOne({
+      where: {
+        uuid: req.params.fund_uuid,
+      },
+    });
+    let auctions = await Auctions.findAll({
+      where: { fund_id: chit_fund.id, is_done: false },
+      attributes: { exclude: ["createdAt", "updatedAt", "uuid"] },
+    });
+    return res.status(200).send({ status: true, auctions });
+  } catch (err) {
+    if (err.details) {
+      return res
+        .status(400)
+        .send({ status: false, message: err.details[0].message });
+    } else {
+      log.error(err);
+      return res.status(500).send({
+        status: false,
+        message: err.message ? err.message : "Internal Server Error.",
+      });
+    }
+  }
+};
+
+exports.chitFundMembersMenu = async (req, res, next) => {
+  try {
+    let chit_fund = await ChitFund.findOne({
+      where: {
+        uuid: req.params.uuid,
+      },
+      attributes: ["id"],
+      include: [
+        {
+          model: User,
+          through: { attributes: [] },
+          as: "members",
+          required: false,
+          attributes: ["id", "name", "email"],
+        },
+      ],
+    });
+    return res
+      .status(200)
+      .send({ status: true, fund_members: chit_fund.members });
+  } catch (err) {
+    if (err.details) {
+      return res
+        .status(400)
+        .send({ status: false, message: err.details[0].message });
+    } else {
+      log.error(err);
+      return res.status(500).send({
+        status: false,
+        message: err.message ? err.message : "Internal Server Error.",
+      });
+    }
+  }
+};
+
+exports.createBid = async (req, res, next) => {
+  try {
+    let auction = await Auctions.findOne({
+      where: { id: req.body.auction_id },
+    });
+    let bid_check = await AuctionBids.findOne({
+      where: { auction_id: auction.id, user_id: req.body.user_id },
+    });
+    if (bid_check) {
+      throw { details: [{ message: "Bid already submitted." }] };
+    }
+    let bid = await AuctionBids.create({
+      ...req.body,
+      fund_id: auction.fund_id,
+    });
+    bid = await AuctionBids.findOne({
+      where: {
+        id: bid.id,
+      },
+    });
+    return res.status(200).send({ status: true, bid });
+  } catch (err) {
+    if (err.details) {
+      return res
+        .status(400)
+        .send({ status: false, message: err.details[0].message });
+    } else {
+      log.error(err);
+      return res.status(500).send({
+        status: false,
+        message: err.message ? err.message : "Internal Server Error.",
+      });
+    }
+  }
+};
+
+exports.bidList = async (req, res, next) => {
+  try {
+    let bids = await AuctionBids.findAll({
+      include: [
+        { model: ChitFund, as: "chit_fund" },
+        { model: User, as: "member" },
+        { model: Auctions, as: "auction" },
+      ],
+    });
+    return res.status(200).send({ status: true, bids });
   } catch (err) {
     if (err.details) {
       return res

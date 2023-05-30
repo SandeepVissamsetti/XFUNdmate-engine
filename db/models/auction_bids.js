@@ -9,6 +9,18 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      auction_bids.belongsTo(models.chit_funds, {
+        as: "chit_fund",
+        foreignKey: "fund_id",
+      });
+      auction_bids.belongsTo(models.auctions, {
+        as: "auction",
+        foreignKey: "auction_id",
+      });
+      auction_bids.belongsTo(models.users, {
+        as: "member",
+        foreignKey: "user_id",
+      });
     }
   }
   auction_bids.init(

@@ -37,7 +37,7 @@ router.get(
 router.post(
   "/auction/start",
   // VerifyToken,
-  // paylodValidation(validationSchemas.fundApproveSchema),
+  // paylodValidation(validationSchemas.auctionSchema),
   chitFundController.startAuction
 );
 
@@ -45,6 +45,31 @@ router.get(
   "/auction/list",
   // VerifyToken,
   chitFundController.auctionList
+);
+
+router.get(
+  "/auction/menu/:fund_uuid",
+  // VerifyToken,
+  chitFundController.auctionMenu
+);
+
+router.get(
+  "/members/menu/:uuid",
+  // VerifyToken,
+  chitFundController.chitFundMembersMenu
+);
+
+router.post(
+  "/auction/bid",
+  // VerifyToken,
+  // paylodValidation(validationSchemas.bidSchema),
+  chitFundController.createBid
+);
+
+router.get(
+  "/auction/bid/list",
+  // VerifyToken,
+  chitFundController.bidList
 );
 
 module.exports = router;
