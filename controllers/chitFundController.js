@@ -266,12 +266,23 @@ exports.createBid = async (req, res, next) => {
   try {
     let auction = await Auctions.findOne({
       where: { id: req.body.auction_id },
+      include: [{ model: ChitFund, as: "chit_fund" }],
     });
     let bid_check = await AuctionBids.findOne({
       where: { auction_id: auction.id, user_id: req.body.user_id },
     });
     if (bid_check) {
       throw { details: [{ message: "Bid already submitted." }] };
+    }
+    if (
+      parseInt(auction.chit_fund.min_auction_amount) >=
+      parseInt(req.body.bid_amount)
+    ) {
+      throw {
+        details: [
+          { message: "Bid amount should be greater than min auction amount." },
+        ],
+      };
     }
     let bid = await AuctionBids.create({
       ...req.body,
