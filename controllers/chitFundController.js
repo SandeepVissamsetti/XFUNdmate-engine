@@ -109,6 +109,40 @@ exports.addMember = async (req, res, next) => {
   }
 };
 
+exports.chitFundMembersList = async (req, res, next) => {
+  try {
+    let chit_fund = await ChitFund.findOne({
+      where: {
+        uuid: req.params.uuid,
+      },
+      attributes: ["id"],
+      include: [
+        {
+          model: User,
+          through: { attributes: [] },
+          as: "members",
+          required: false,
+        },
+      ],
+    });
+    return res
+      .status(200)
+      .send({ status: true, fund_members: chit_fund.members });
+  } catch (err) {
+    if (err.details) {
+      return res
+        .status(400)
+        .send({ status: false, message: err.details[0].message });
+    } else {
+      log.error(err);
+      return res.status(500).send({
+        status: false,
+        message: err.message ? err.message : "Internal Server Error.",
+      });
+    }
+  }
+};
+
 exports.fundApprove = async (req, res, next) => {
   try {
     let chit_fund = await ChitFund.findOne({

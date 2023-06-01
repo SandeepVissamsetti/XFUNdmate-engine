@@ -21,6 +21,12 @@ router.post(
   chitFundController.addMember
 );
 
+router.get(
+  "/members/list/:uuid",
+  // VerifyToken,
+  chitFundController.chitFundMembersList
+);
+
 router.post(
   "/approve",
   // VerifyToken,
