@@ -15,6 +15,10 @@ module.exports = (sequelize, DataTypes) => {
         as: "members",
         foreignKey: "fund_id",
       });
+      chit_funds.hasMany(models.auctions, {
+        as: "auctions",
+        foreignKey: "fund_id",
+      });
     }
   }
   chit_funds.init(

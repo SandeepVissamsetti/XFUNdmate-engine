@@ -88,6 +88,14 @@ exports.addMember = async (req, res, next) => {
     let chit_fund = await ChitFund.findOne({
       where: { id: req.body.fund_id },
     });
+    let total_members = await FundMembers.count({
+      where: { fund_id: chit_fund.id },
+    });
+    if (total_members >= chit_fund.total_members) {
+      throw {
+        details: [{ message: "Fund reached max member count." }],
+      };
+    }
     let user = await User.create(req.body);
     await FundMembers.create({ fund_id: chit_fund.id, user_id: user.id });
     delete user.dataValues.xrpl_secret;
@@ -124,10 +132,17 @@ exports.chitFundMembersList = async (req, res, next) => {
           required: false,
         },
       ],
+      order: [
+        [
+          { model: User, through: { attributes: [] }, as: "members" },
+          "createdAt",
+          "DESC",
+        ],
+      ],
     });
     return res
       .status(200)
-      .send({ status: true, fund_members: chit_fund.members });
+      .send({ status: true, fund_members: chit_fund ? chit_fund.members : [] });
   } catch (err) {
     if (err.details) {
       return res
@@ -194,6 +209,32 @@ exports.chitFundApprovedMenu = async (req, res, next) => {
 
 exports.startAuction = async (req, res, next) => {
   try {
+    let chit_fund = await ChitFund.findOne({
+      where: { id: req.body.fund_id },
+      include: [
+        {
+          model: Auctions,
+          as: "auctions",
+          where: { is_done: false },
+          required: false,
+        },
+      ],
+    });
+    if (!chit_fund) {
+      throw {
+        details: [{ message: "Invalid Fund" }],
+      };
+    }
+    if (!chit_fund.fund_approved) {
+      throw {
+        details: [{ message: "Fund not approved" }],
+      };
+    }
+    if (chit_fund.auctions.length > 0) {
+      throw {
+        details: [{ message: "Auction already started." }],
+      };
+    }
     let auction = await Auctions.create(req.body);
     auction = await Auctions.findOne({
       where: { id: auction.id },
@@ -220,6 +261,7 @@ exports.auctionList = async (req, res, next) => {
     let query = {
       where: {},
       include: [{ model: ChitFund, as: "chit_fund" }],
+      order: [["createdAt", "DESC"]],
     };
     if (req.query.fund_id) {
       query.where.fund_id = req.query.fund_id;
@@ -242,16 +284,20 @@ exports.auctionList = async (req, res, next) => {
 };
 
 exports.auctionMenu = async (req, res, next) => {
+  let auctions = [];
   try {
     let chit_fund = await ChitFund.findOne({
       where: {
         uuid: req.params.fund_uuid,
       },
     });
-    let auctions = await Auctions.findAll({
-      where: { fund_id: chit_fund.id, is_done: false },
-      attributes: { exclude: ["createdAt", "updatedAt", "uuid"] },
-    });
+    if (chit_fund) {
+      auctions = await Auctions.findAll({
+        where: { fund_id: chit_fund.id, is_done: false },
+        attributes: { exclude: ["createdAt", "updatedAt", "uuid"] },
+        order: [["createdAt", "DESC"]],
+      });
+    }
     return res.status(200).send({ status: true, auctions });
   } catch (err) {
     if (err.details) {
@@ -284,10 +330,17 @@ exports.chitFundMembersMenu = async (req, res, next) => {
           attributes: ["id", "name", "email"],
         },
       ],
+      order: [
+        [
+          { model: User, through: { attributes: [] }, as: "members" },
+          "createdAt",
+          "DESC",
+        ],
+      ],
     });
     return res
       .status(200)
-      .send({ status: true, fund_members: chit_fund.members });
+      .send({ status: true, fund_members: chit_fund ? chit_fund.members : [] });
   } catch (err) {
     if (err.details) {
       return res
@@ -368,6 +421,31 @@ exports.bidList = async (req, res, next) => {
     }
     let bids = await AuctionBids.findAll(query);
     return res.status(200).send({ status: true, bids });
+  } catch (err) {
+    if (err.details) {
+      return res
+        .status(400)
+        .send({ status: false, message: err.details[0].message });
+    } else {
+      log.error(err);
+      return res.status(500).send({
+        status: false,
+        message: err.message ? err.message : "Internal Server Error.",
+      });
+    }
+  }
+};
+
+exports.auctionFulfill = async (req, res, next) => {
+  try {
+    let auction = await Auctions.findOne({
+      where: { uuid: req.params.auction_uuid },
+      include: [
+        { model: ChitFund, as: "chit_fund" },
+        { model: AuctionBids, as: "bids" },
+      ],
+    });
+    return res.status(200).send({ status: true, auction });
   } catch (err) {
     if (err.details) {
       return res

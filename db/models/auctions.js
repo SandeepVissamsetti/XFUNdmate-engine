@@ -13,6 +13,10 @@ module.exports = (sequelize, DataTypes) => {
         as: "chit_fund",
         foreignKey: "fund_id",
       });
+      auctions.hasMany(models.auction_bids, {
+        as: "bids",
+        foreignKey: "auction_id",
+      });
     }
   }
   auctions.init(
@@ -33,6 +37,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
       },
       is_done: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      auction_settled: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false,

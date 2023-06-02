@@ -29,6 +29,14 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      is_winner: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+      },
+      received_amount: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
