@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("auction_bids", {
+    await queryInterface.createTable("auction_summaries", {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -21,22 +21,42 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-      user_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-      },
-      bid_amount: {
+      total_fund_amount: {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      // is_winner: {
-      //   type: Sequelize.BOOLEAN,
-      //   allowNull: false,
-      // },
-      // received_amount: {
-      //   type: Sequelize.STRING,
-      //   allowNull: false,
-      // },
+      total_members: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      monthly_chit_amount: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      agent_commission_percentage: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      auction_amount: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      winner_amount: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      agent_commission_amount: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      total_dividend_amount: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      dividend_per_member: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -48,6 +68,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("auction_bids");
+    await queryInterface.dropTable("auction_summaries");
   },
 };

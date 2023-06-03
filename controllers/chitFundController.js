@@ -7,6 +7,8 @@ const User = require("../db/models").users;
 const FundMembers = require("../db/models").fund_members;
 const Auctions = require("../db/models").auctions;
 const AuctionBids = require("../db/models").auction_bids;
+const AuctionSummary = require("../db/models").auction_summary;
+const AuctionSettlements = require("../db/models").auction_settlements;
 
 exports.chitFundList = async (req, res, next) => {
   try {
@@ -460,13 +462,73 @@ exports.auctionFulfill = async (req, res, next) => {
     let auction = await Auctions.findOne({
       where: { uuid: req.params.auction_uuid },
       include: [
-        { model: ChitFund, as: "chit_fund" },
+        {
+          model: ChitFund,
+          as: "chit_fund",
+          include: [
+            {
+              model: User,
+              through: { attributes: [] },
+              as: "members",
+              required: false,
+            },
+          ],
+        },
         { model: AuctionBids, as: "bids" },
       ],
+      order: [[{ model: AuctionBids, as: "bids" }, "createdAt", "desc"]],
     });
-    let chit_amount = auction.chit_fund.fund_amount;
-    let commission_percentage = auction.chit_fund.commission_percentage;
-    return res.status(200).send({ status: true, auction });
+    let chit_amount = parseInt(auction.chit_fund.fund_amount);
+    let commission_percentage = parseInt(
+      auction.chit_fund.commission_percentage
+    );
+    let max_bid_user = auction.bids.reduce((prev, current) =>
+      parseInt(prev.bid_amount) > parseInt(current.bid_amount) ? prev : current
+    );
+    let auction_amount = parseInt(max_bid_user.bid_amount);
+    let winner_amount = chit_amount - auction_amount;
+    let agent_commission_amount =
+      (auction_amount * commission_percentage) / 100;
+    let total_dividend_amount = auction_amount - agent_commission_amount;
+    let dividend_per_member =
+      total_dividend_amount / (auction.chit_fund.total_members - 1);
+    let auction_summary = await AuctionSummary.create({
+      fund_id: auction.chit_fund.id,
+      auction_id: auction.id,
+      total_fund_amount: auction.chit_fund.fund_amount,
+      total_members: auction.chit_fund.total_members,
+      monthly_chit_amount:
+        parseInt(auction.chit_fund.fund_amount) /
+        auction.chit_fund.total_members,
+      agent_commission_percentage: auction.chit_fund.commission_percentage,
+      auction_amount,
+      winner_amount,
+      agent_commission_amount,
+      total_dividend_amount,
+      dividend_per_member,
+    });
+    await Auctions.update({ is_done: true }, { where: { id: auction.id } });
+    let auction_settlements = auction.chit_fund.members.map((member) => {
+      return {
+        fund_id: auction.fund_id,
+        auction_id: auction.id,
+        user_id: member.id,
+        is_winner: max_bid_user.user_id == member.id,
+        received_amount:
+          max_bid_user.user_id == member.id
+            ? winner_amount
+            : dividend_per_member,
+      };
+    });
+    await AuctionSettlements.bulkCreate(auction_settlements);
+    auction_summary = await AuctionSummary.findOne({
+      where: { id: auction_summary.id },
+      include: [
+        { model: ChitFund, as: "chit_fund" },
+        { model: Auctions, as: "auctions" },
+      ],
+    });
+    return res.status(200).send({ status: true, auction_summary });
   } catch (err) {
     if (err.details) {
       return res

@@ -1,7 +1,7 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
-  class auction_bids extends Model {
+  class auction_settlements extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -9,21 +9,9 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      auction_bids.belongsTo(models.chit_funds, {
-        as: "chit_fund",
-        foreignKey: "fund_id",
-      });
-      auction_bids.belongsTo(models.auctions, {
-        as: "auction",
-        foreignKey: "auction_id",
-      });
-      auction_bids.belongsTo(models.users, {
-        as: "member",
-        foreignKey: "user_id",
-      });
     }
   }
-  auction_bids.init(
+  auction_settlements.init(
     {
       uuid: {
         type: DataTypes.UUID,
@@ -42,25 +30,21 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      bid_amount: {
+      is_winner: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      received_amount: {
         type: DataTypes.STRING,
         allowNull: false,
+        defaultValue: "",
       },
-      // is_winner: {
-      //   type: DataTypes.BOOLEAN,
-      //   allowNull: false,
-      //   defaultValue: false,
-      // },
-      // received_amount: {
-      //   type: DataTypes.STRING,
-      //   allowNull: false,
-      //   defaultValue: "",
-      // },
     },
     {
       sequelize,
-      modelName: "auction_bids",
+      modelName: "auction_settlements",
     }
   );
-  return auction_bids;
+  return auction_settlements;
 };

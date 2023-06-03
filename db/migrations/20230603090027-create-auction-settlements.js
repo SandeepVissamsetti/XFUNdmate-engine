@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("auction_bids", {
+    await queryInterface.createTable("auction_settlements", {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -25,18 +25,14 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-      bid_amount: {
+      is_winner: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+      },
+      received_amount: {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      // is_winner: {
-      //   type: Sequelize.BOOLEAN,
-      //   allowNull: false,
-      // },
-      // received_amount: {
-      //   type: Sequelize.STRING,
-      //   allowNull: false,
-      // },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -48,6 +44,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("auction_bids");
+    await queryInterface.dropTable("auction_settlements");
   },
 };
