@@ -188,7 +188,7 @@ exports.chitFundApprovedMenu = async (req, res, next) => {
       where: {
         fund_approved: true,
       },
-      attributes: ["id", "fund_name", "uuid"],
+      attributes: ["id", "uuid", "fund_name", "fund_amount", "total_members"],
       order: [["createdAt", "desc"]],
     });
     return res.status(200).send({ status: true, chit_funds });
@@ -218,6 +218,12 @@ exports.startAuction = async (req, res, next) => {
           where: { is_done: false },
           required: false,
         },
+        {
+          model: User.scope("withXRPLSecret"),
+          through: { attributes: [] },
+          as: "members",
+          required: false,
+        },
       ],
     });
     if (!chit_fund) {
@@ -236,6 +242,19 @@ exports.startAuction = async (req, res, next) => {
       };
     }
     let auction = await Auctions.create(req.body);
+    let member_pay = parseInt(chit_fund.fund_amount) / chit_fund.total_members;
+    let models_array = [];
+    chit_fund.members.forEach((member) => {
+      models_array.push(
+        helperXRPL.sendXRP(
+          member.xrpl_address,
+          member.xrpl_secret,
+          member_pay,
+          chit_fund.xrpl_address
+        )
+      );
+    });
+    let transactions = await Promise.all(models_array);
     auction = await Auctions.findOne({
       where: { id: auction.id },
       include: [{ model: ChitFund, as: "chit_fund" }],
@@ -445,6 +464,8 @@ exports.auctionFulfill = async (req, res, next) => {
         { model: AuctionBids, as: "bids" },
       ],
     });
+    let chit_amount = auction.chit_fund.fund_amount;
+    let commission_percentage = auction.chit_fund.commission_percentage;
     return res.status(200).send({ status: true, auction });
   } catch (err) {
     if (err.details) {
