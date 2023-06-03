@@ -84,4 +84,10 @@ router.get(
   chitFundController.auctionFulfill
 );
 
+router.get(
+  "/auction/summary/:summary_uuid",
+  // VerifyToken,
+  chitFundController.auctionSummary
+);
+
 module.exports = router;

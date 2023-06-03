@@ -17,6 +17,10 @@ module.exports = (sequelize, DataTypes) => {
         as: "bids",
         foreignKey: "auction_id",
       });
+      auctions.hasOne(models.auction_summary, {
+        as: "auction_summary",
+        foreignKey: "auction_id",
+      });
     }
   }
   auctions.init(

@@ -281,7 +281,14 @@ exports.auctionList = async (req, res, next) => {
   try {
     let query = {
       where: {},
-      include: [{ model: ChitFund, as: "chit_fund" }],
+      include: [
+        { model: ChitFund, as: "chit_fund" },
+        {
+          model: AuctionSummary,
+          as: "auction_summary",
+          attributes: ["id", "uuid"],
+        },
+      ],
       order: [["createdAt", "DESC"]],
     };
     if (req.query.fund_id) {
@@ -478,6 +485,9 @@ exports.auctionFulfill = async (req, res, next) => {
       ],
       order: [[{ model: AuctionBids, as: "bids" }, "createdAt", "desc"]],
     });
+    if (auction && (auction.is_done || auction.auction_settled)) {
+      throw { details: [{ message: "Auction already ended." }] };
+    }
     let chit_amount = parseInt(auction.chit_fund.fund_amount);
     let commission_percentage = parseInt(
       auction.chit_fund.commission_percentage
@@ -523,6 +533,31 @@ exports.auctionFulfill = async (req, res, next) => {
     await AuctionSettlements.bulkCreate(auction_settlements);
     auction_summary = await AuctionSummary.findOne({
       where: { id: auction_summary.id },
+      include: [
+        { model: ChitFund, as: "chit_fund" },
+        { model: Auctions, as: "auctions" },
+      ],
+    });
+    return res.status(200).send({ status: true, auction_summary });
+  } catch (err) {
+    if (err.details) {
+      return res
+        .status(400)
+        .send({ status: false, message: err.details[0].message });
+    } else {
+      log.error(err);
+      return res.status(500).send({
+        status: false,
+        message: err.message ? err.message : "Internal Server Error.",
+      });
+    }
+  }
+};
+
+exports.auctionSummary = async (req, res, next) => {
+  try {
+    let auction_summary = await AuctionSummary.findOne({
+      where: { uuid: req.params.summary_uuid },
       include: [
         { model: ChitFund, as: "chit_fund" },
         { model: Auctions, as: "auctions" },
