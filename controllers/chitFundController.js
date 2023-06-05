@@ -433,6 +433,11 @@ exports.createBid = async (req, res, next) => {
 
 exports.bidList = async (req, res, next) => {
   try {
+    if (!req.query.fund_id) {
+      throw {
+        details: [{ message: "Please select a fund." }],
+      };
+    }
     let query = {
       where: {},
       include: [
@@ -447,8 +452,11 @@ exports.bidList = async (req, res, next) => {
     if (req.query.auction_id) {
       query.where.auction_id = req.query.auction_id;
     }
+    let chit_fund = await ChitFund.findOne({
+      where: { id: req.query.fund_id },
+    });
     let bids = await AuctionBids.findAll(query);
-    return res.status(200).send({ status: true, bids });
+    return res.status(200).send({ status: true, bids, chit_fund });
   } catch (err) {
     if (err.details) {
       return res
@@ -535,10 +543,61 @@ exports.auctionFulfill = async (req, res, next) => {
       where: { id: auction_summary.id },
       include: [
         { model: ChitFund, as: "chit_fund" },
-        { model: Auctions, as: "auctions" },
+        {
+          model: Auctions,
+          as: "auction",
+          include: [
+            {
+              model: AuctionSettlements,
+              as: "auction_settlements",
+              include: [{ model: User, as: "member" }],
+            },
+          ],
+        },
       ],
     });
     return res.status(200).send({ status: true, auction_summary });
+  } catch (err) {
+    if (err.details) {
+      return res
+        .status(400)
+        .send({ status: false, message: err.details[0].message });
+    } else {
+      log.error(err);
+      return res.status(500).send({
+        status: false,
+        message: err.message ? err.message : "Internal Server Error.",
+      });
+    }
+  }
+};
+
+exports.auctionSettle = async (req, res, next) => {
+  try {
+    let auction = await Auctions.findOne({
+      where: { uuid: req.params.auction_uuid },
+      include: [
+        { model: ChitFund.scope("withXRPLSecret"), as: "chit_fund" },
+        {
+          model: AuctionSettlements,
+          as: "auction_settlements",
+          include: [{ model: User, as: "member" }],
+        },
+      ],
+    });
+    let models_array = [];
+    auction.auction_settlements.forEach((settle_obj) => {
+      models_array.push(
+        helperXRPL.sendXRP(
+          auction.chit_fund.xrpl_address,
+          auction.chit_fund.xrpl_secret,
+          settle_obj.received_amount,
+          settle_obj.member.xrpl_address
+        )
+      );
+    });
+    let transactions = await Promise.all(models_array);
+    return res.status(200).send({ status: true, auction });
   } catch (err) {
     if (err.details) {
       return res
@@ -560,7 +619,17 @@ exports.auctionSummary = async (req, res, next) => {
       where: { uuid: req.params.summary_uuid },
       include: [
         { model: ChitFund, as: "chit_fund" },
-        { model: Auctions, as: "auctions" },
+        {
+          model: Auctions,
+          as: "auction",
+          include: [
+            {
+              model: AuctionSettlements,
+              as: "auction_settlements",
+              include: [{ model: User, as: "member" }],
+            },
+          ],
+        },
       ],
     });
     return res.status(200).send({ status: true, auction_summary });

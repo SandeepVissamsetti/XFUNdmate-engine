@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "fund_id",
       });
       auction_summary.belongsTo(models.auctions, {
-        as: "auctions",
+        as: "auction",
         foreignKey: "auction_id",
       });
     }

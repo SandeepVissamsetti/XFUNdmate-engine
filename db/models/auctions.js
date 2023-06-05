@@ -21,6 +21,10 @@ module.exports = (sequelize, DataTypes) => {
         as: "auction_summary",
         foreignKey: "auction_id",
       });
+      auctions.hasMany(models.auction_settlements, {
+        as: "auction_settlements",
+        foreignKey: "auction_id",
+      });
     }
   }
   auctions.init(

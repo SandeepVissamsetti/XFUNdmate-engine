@@ -85,6 +85,12 @@ router.get(
 );
 
 router.get(
+  "/auction/settle/:auction_uuid",
+  // VerifyToken,
+  chitFundController.auctionSettle
+);
+
+router.get(
   "/auction/summary/:summary_uuid",
   // VerifyToken,
   chitFundController.auctionSummary
