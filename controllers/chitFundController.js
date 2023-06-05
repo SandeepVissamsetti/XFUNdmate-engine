@@ -217,7 +217,7 @@ exports.startAuction = async (req, res, next) => {
         {
           model: Auctions,
           as: "auctions",
-          where: { is_done: false },
+          // where: { is_done: false },
           required: false,
         },
         {
