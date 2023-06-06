@@ -591,7 +591,7 @@ exports.auctionSettle = async (req, res, next) => {
       models_array.push({
         sender: auction.chit_fund.xrpl_address,
         secret: auction.chit_fund.xrpl_secret,
-        amount: 100000,
+        amount: settle_obj.received_amount,
         destination: settle_obj.member.xrpl_address,
       });
     });
