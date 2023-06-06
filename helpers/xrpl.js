@@ -37,3 +37,16 @@ exports.sendXRP = async (
   client.disconnect();
   return tx;
 };
+
+exports.getAccInfo = async (address) => {
+  const client = new xrpl.Client(process.env.XRPL_WS_CLIENT_ADDRESS);
+  await client.connect();
+  const response = await client.request({
+    command: "account_tx",
+    account: address,
+    // ledger_index: "validated",
+    // limit: 1,
+  });
+  client.disconnect();
+  return response;
+};

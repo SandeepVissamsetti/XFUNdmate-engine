@@ -26,4 +26,11 @@ router.post(
   XRPLController.sendXRP
 );
 
+router.post(
+  "/acc-info",
+  // VerifyToken,
+  // paylodValidation(validationSchemas.fundCreateSchema),
+  XRPLController.getAccountInfo
+);
+
 module.exports = router;

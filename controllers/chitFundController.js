@@ -585,19 +585,35 @@ exports.auctionSettle = async (req, res, next) => {
         },
       ],
     });
-    let models_array = [];
-    auction.auction_settlements.forEach((settle_obj) => {
-      models_array.push(
-        helperXRPL.sendXRP(
-          auction.chit_fund.xrpl_address,
-          auction.chit_fund.xrpl_secret,
-          settle_obj.received_amount,
-          settle_obj.member.xrpl_address
-        )
-      );
+    let models_array = [],
+      result_array = [];
+    auction.auction_settlements.forEach(async (settle_obj) => {
+      models_array.push({
+        sender: auction.chit_fund.xrpl_address,
+        secret: auction.chit_fund.xrpl_secret,
+        amount: 100000,
+        destination: settle_obj.member.xrpl_address,
+      });
     });
-    let transactions = await Promise.all(models_array);
-    return res.status(200).send({ status: true, auction });
+    // Sequential promise
+    const starterPromise = Promise.resolve(null);
+    await models_array.reduce(
+      (p, spec) =>
+        p.then(() =>
+          helperXRPL
+            .sendXRP(spec.sender, spec.secret, spec.amount, spec.destination)
+            .then((result) => result_array.push(result))
+        ),
+      starterPromise
+    );
+    let auction_update = await Auctions.update(
+      { auction_settled: true },
+      { where: { uuid: req.params.auction_uuid } }
+    );
+    if (auction_update[0]) {
+      auction.auction_settled = true;
+    }
+    return res.status(200).send({ status: true, auction, result_array });
   } catch (err) {
     if (err.details) {
       return res

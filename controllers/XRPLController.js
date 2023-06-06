@@ -64,3 +64,22 @@ exports.sendXRP = async (req, res, next) => {
     }
   }
 };
+
+exports.getAccountInfo = async (req, res, next) => {
+  try {
+    const info = await helperXRPL.getAccInfo(req.body.address);
+    return res.status(200).send({ status: true, info });
+  } catch (err) {
+    if (err.details) {
+      return res
+        .status(400)
+        .send({ status: false, message: err.details[0].message });
+    } else {
+      log.error(err);
+      return res.status(500).send({
+        status: false,
+        message: err.message ? err.message : "Internal Server Error.",
+      });
+    }
+  }
+};
