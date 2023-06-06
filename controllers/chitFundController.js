@@ -578,6 +578,7 @@ exports.auctionSettle = async (req, res, next) => {
       where: { uuid: req.params.auction_uuid },
       include: [
         { model: ChitFund.scope("withXRPLSecret"), as: "chit_fund" },
+        { model: AuctionSummary, as: "auction_summary" },
         {
           model: AuctionSettlements,
           as: "auction_settlements",
@@ -606,14 +607,30 @@ exports.auctionSettle = async (req, res, next) => {
         ),
       starterPromise
     );
-    let auction_update = await Auctions.update(
+    await Auctions.update(
       { auction_settled: true },
       { where: { uuid: req.params.auction_uuid } }
     );
-    if (auction_update[0]) {
-      auction.auction_settled = true;
-    }
-    return res.status(200).send({ status: true, auction, result_array });
+    let auction_summary = await AuctionSummary.findOne({
+      where: { uuid: auction.auction_summary.uuid },
+      include: [
+        { model: ChitFund, as: "chit_fund" },
+        {
+          model: Auctions,
+          as: "auction",
+          include: [
+            {
+              model: AuctionSettlements,
+              as: "auction_settlements",
+              include: [{ model: User, as: "member" }],
+            },
+          ],
+        },
+      ],
+    });
+    return res
+      .status(200)
+      .send({ status: true, auction_summary, result_array });
   } catch (err) {
     if (err.details) {
       return res
