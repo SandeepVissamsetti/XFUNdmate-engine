@@ -5,8 +5,8 @@
  */
 require("dotenv").config();
 const app = require("../app");
-const debug = require("debug")("XFUNdmate:server");
-const db_debug = require("debug")("XFUNdmate:DB");
+const debug = require("debug")(`${process.env.APP_NAME}:server`);
+const db_debug = require("debug")(`${process.env.APP_NAME}:DB`);
 const http = require("http");
 const db = require("../db/models");
 
